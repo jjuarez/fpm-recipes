@@ -23,7 +23,7 @@ class Haproxy < FPM::Cookery::Recipe
 
   # WARNING: This blindly assumes a new kernel and building on the target box.
   def build
-    make 'TARGET' => 'linux2628', 'CPU' => 'native', 'USE_PCRE' => '1', 'USE_OPENSSL' => '1', 'USE_ZLIB' => '1'
+    make 'TARGET' => 'custom', 'CPU' => 'native', 'USE_PCRE' => '1', 'USE_OPENSSL' => '1', 'USE_ZLIB' => '1', 'USE_LINUX_TPROXY' => '1', 'USE_LINUX_SPLICE' => '1'
 
     # halog
     make '-C', 'contrib/halog'
