@@ -9,7 +9,7 @@ class Ruby210 < FPM::Cookery::Recipe
   sha256   '6948b02570cdfb89a8313675d4aa665405900e27423db408401473f30fc6e901'
 
   section       'interpreters'
-  build_depends 'autoconf', 'readline-dev', 'bison', 'zlib-dev', 'openssl-dev', 'libyaml-dev'
+  build_depends 'autoconf', 'bison', 'readline-devel', 'zlib-devel', 'openssl-devel', 'libyaml-devel'
   depends       'ffi', 'ncurses', 'readline', 'openssl', 'tinfo5', 'libyaml', 'zlib'
 
   def build
