@@ -10,7 +10,7 @@ class Ruby210 < FPM::Cookery::Recipe
 
   section       'interpreters'
   build_depends 'autoconf', 'bison', 'readline-devel', 'zlib-devel', 'openssl-devel', 'libyaml-devel'
-  depends       'libffi', 'ncurses', 'readline', 'openssl', 'tinfo5', 'libyaml', 'zlib'
+  depends       'libffi', 'ncurses', 'readline', 'openssl', 'libyaml', 'zlib'
 
   def build
 
