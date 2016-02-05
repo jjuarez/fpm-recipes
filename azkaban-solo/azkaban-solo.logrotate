@@ -1,0 +1,7 @@
+/var/log/azkaban-solo/*.log {
+	daily
+	rotate 1
+	copytruncate
+	compress
+	missingok
+}
