@@ -51,7 +51,6 @@ DEFAULT=/etc/default/${NAME}
 AZKABAN_USER=azkaban
 AZKABAN_GROUP=azkaban
 AZKABAN_HOME="/opt/azkaban-solo"
-AZKABAN_SH="${AZKABAN_HOME}/bin/azkaban-solo.sh"
 AZKABAN_EXECUTOR_PORT="12321"
 AZKABAN_TMP=/tmp/`basename ${0}`
 AZKABAN_START_TIMEOUT=5
@@ -62,7 +61,7 @@ AZKABAN_START_TIMEOUT=5
 # Overwrite settings from default file
 [ -f "${DEFAULT}" ] && . "${DEFAULT}"
 
-[ -x "${AZKABAN_SH}" ] || {
+[ -x "${AZKABAN_HOME}/bin/azkaban-solo.sh" ] || {
 
   log_failure_msg "${NAME} is not installed"
   exit 1
@@ -70,7 +69,6 @@ AZKABAN_START_TIMEOUT=5
 
 # Define other required variables
 AZKABAN_PID="/var/run/${NAME}.pid"
-AZKABAN_SH="${AZKABAN_HOME}/bin/azkaban-solo.sh"
 
 
 ##
@@ -103,8 +101,8 @@ case "$1" in
 
       chown ${AZKABAN_USER} "${AZKABAN_TMP}"
 
-      su - ${AZKABAN_USER} -c "${AZKABAN_SH} start"
-      log_daemon_msg "Launching ${AZKABAN_SH} start"
+      su - ${AZKABAN_USER} -c "${AZKABAN_HOME}/bin/azkaban-solo.sh start"
+      log_daemon_msg "Launching ${AZKABAN_HOME}/bin/azkaban-solo.sh start"
 
       sleep ${AZKABAN_START_TIMEOUT}
 
