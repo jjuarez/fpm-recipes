@@ -88,7 +88,7 @@ _do_start_server( ) {
 
   AZKABAN_OPTS="${AZKABAN_OPTS} -D__AZKABAN_SOLO__ -Dlog4j.configuration=file:/etc/azkaban-solo/log4j.properties -server -Dcom.sun.management.jmxremote -Djava.io.tmpdir=${AZKABAN_TMP} -Dexecutorport=${AZKABAN_EXECUTOR_PORT} -Dserverpath=${AZKABAN_HOME}"
 
-  ${JAVA_HOME}/bin/java ${AZKABAN_OPTS} -classpath ${CLASSPATH} azkaban.webapp.AzkabanSingleServer -conf /etc/azkaban-solo/conf ${@}
+  ${JAVA_HOME}/bin/java ${AZKABAN_OPTS} -classpath ${CLASSPATH} azkaban.webapp.AzkabanSingleServer -conf /etc/azkaban-solo ${@}
 }
 
 
