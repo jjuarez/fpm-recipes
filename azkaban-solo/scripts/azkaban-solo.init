@@ -23,25 +23,25 @@ DESC="Azkaban solo server"
 DEFAULT=/etc/default/${NAME}
 
 
-[[ `id -u` -ne 0 ]] && {
+[ `id -u` -ne 0 ] && {
   echo "You need root privileges to run this script"
   exit 1
 }
  
-[[ -r /etc/default/locale ]] && {
+[ -r /etc/default/locale ] && {
   . /etc/default/locale
   export LANG
 }
 
 . /lib/lsb/init-functions
 
-[[ -r /etc/default/rcS ]] && . /etc/default/rcS
+[ -r /etc/default/rcS ] && . /etc/default/rcS
 
 
 # Java environment
-[[ -r /etc/profile.d/java.sh ]] && . /etc/profile.d/java.sh
+[ -r /etc/profile.d/java.sh ] && . /etc/profile.d/java.sh
 
-[[ -n "${JAVA_HOME}" ]] || {
+[ -n "${JAVA_HOME}" ] || {
 
   log_failure "JAVA_HOME environment variable is not set"
   exit 1
@@ -57,12 +57,12 @@ AZKABAN_TMP=/tmp/`basename ${0}`
 AZKABAN_START_TIMEOUT=5
 
 
-[[ -z "${JAVA_OPTS}" ]] && JAVA_OPTS="-Djava.awt.headless=true -Xmx3G"
+[ -z "${JAVA_OPTS}" ] && JAVA_OPTS="-Djava.awt.headless=true -Xmx3G"
 
 # Overwrite settings from default file
-[[ -f "${DEFAULT}" ]] && . "${DEFAULT}"
+[ -f "${DEFAULT}" ] && . "${DEFAULT}"
 
-[[ -x "${AZKABAN_SH}" ]] || {
+[ -x "${AZKABAN_SH}" ] || {
 
   log_failure_msg "${NAME} is not installed"
   exit 1
@@ -74,31 +74,16 @@ AZKABAN_SH="${AZKABAN_HOME}/bin/azkaban-solo.sh"
 
 
 ##
-# Call the azkaban service script
-azkaban_solo_sh( ) {
-
-  local command=${1}
-
-  case ${command} in
-    start|stop)
-      ${AZKABAN_SH} ${command}
-      log_daemon_msg "Doing ${command} with ${AZKABAN_SH}"
-      ;;
-  esac
-}
-
-
-##
 # ::main::
 case "$1" in
   start)
-    [[ -z "${JAVA_HOME}" ]] && {
+    [ -z "${JAVA_HOME}" ] && {
 
       log_failure_msg "no JDK found - please set JAVA_HOME"
       exit 1
     }
 
-    [[ -d "${AZKABAN_HOME}/conf" ]] || {
+    [ -d "${AZKABAN_HOME}/conf" ] || {
 
       log_failure_msg "invalid AZKABAN_HOME: ${AZKABAN_HOME}"
       exit 1
@@ -116,14 +101,16 @@ case "$1" in
         exit 1
       }
 
-      chown ${AZKABAN_USER} "${JVM_TMP}"
+      chown ${AZKABAN_USER} "${AZKABAN_TMP}"
 
-      azkaban_solo_sh start
+      su - ${AZKABAN_USER} -c "${AZKABAN_SH} start"
+      log_daemon_msg "Launching ${AZKABAN_SH} start"
+
       sleep ${AZKABAN_START_TIMEOUT}
 
       if start-stop-daemon --test --start --pidfile "${AZKABAN_PID}" --user ${AZKABAN_USER} --exec "${JAVA_HOME}/bin/java" >/dev/null; then
 
-        [[ -f "${AZKABAN_PID}" ]] && rm -f "${AZKABAN_PID}"
+        [ -f "${AZKABAN_PID}" ] && rm -f "${AZKABAN_PID}"
 
         log_end_msg 1
       else
