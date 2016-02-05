@@ -27,7 +27,6 @@ class AzkabanSolo < FPM::Cookery::Recipe
   }
 
   def build
-    puts "build"
   end
 
 
@@ -41,7 +40,8 @@ class AzkabanSolo < FPM::Cookery::Recipe
 		etc('security/limits.d').install workdir('azkaban-solo.limits'), 'azkaban-solo.conf'
 		etc('logrotate.d').install workdir('azkaban-solo.logrotate'), 'azkaban-solo.conf'
 
-    etc('azkaban-solo').install Dir['config/*']
+    etc('azkaban-solo').install Dir['conf/*']
+    etc('azkaban-solo').install workdir('log4j.properties')
   end
 end
 
