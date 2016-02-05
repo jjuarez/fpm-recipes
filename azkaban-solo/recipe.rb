@@ -3,6 +3,7 @@
 class AzkabanSolo < FPM::Cookery::Recipe
 
   description 'The most simple form of Azkaban server'
+
   name     'azkaban-solo'
   version  '2.5.0'
   revision 0
@@ -12,7 +13,8 @@ class AzkabanSolo < FPM::Cookery::Recipe
   md5      'a3a5a681f040cd4f7d4032e40edb0953'
   arch     'all'
   section  'databases'
-  depends  'openjdk-7-jre-headless'
+
+# depends 'default-jre-headless'
 
   post_install   'post-install'
   post_uninstall 'post-uninstall'
@@ -33,15 +35,14 @@ class AzkabanSolo < FPM::Cookery::Recipe
   def install
 
     opt('azkaban-solo').install Dir['*']
-    opt('azkaban-solo/bin').install workdir('azkaban-solo.sh')
+    opt('azkaban-solo/bin').install workdir('scripts/azkaban-solo.sh')
 
-    etc('default').install workdir('azkaban-solo.default'), 'azkaban-solo'
-    etc('init.d').install workdir('azkaban-solo.init'), 'azkaban-solo'
-    etc('security/limits.d').install workdir('azkaban-solo.limits'), 'azkaban-solo.conf'
-    etc('logrotate.d').install workdir('azkaban-solo.logrotate'), 'azkaban-solo.conf'
-
+    etc('default').install workdir('config/azkaban-solo.default'), 'azkaban-solo'
+    etc('init.d').install workdir('scripts/azkaban-solo.init'), 'azkaban-solo'
+    etc('security/limits.d').install workdir('config/azkaban-solo.limits'), 'azkaban-solo.conf'
+    etc('logrotate.d').install workdir('config/azkaban-solo.logrotate'), 'azkaban-solo.conf'
+    etc('azkaban-solo').install workdir('config/log4j.properties')
     etc('azkaban-solo').install Dir['conf/*']
-    etc('azkaban-solo').install workdir('log4j.properties')
   end
 end
 
