@@ -12,7 +12,7 @@ class AzkabanSolo < FPM::Cookery::Recipe
   md5      'a3a5a681f040cd4f7d4032e40edb0953'
   arch     'all'
   section  'databases'
-  depends 'default-jre-headless'
+  depends  'openjdk-7-jre-headless'
 
   post_install   'post-install'
   post_uninstall 'post-uninstall'
