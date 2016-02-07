@@ -19,6 +19,7 @@ case "$1" in
     rm -rf "${LOG_DIR}"    &> /dev/null || true
     rm -rf "${CONFIG_DIR}" &> /dev/null || true
     rm -rf "${DATA_DIR}"   &> /dev/null || true
+    rm -rf "${SERVER_DIR}" &> /dev/null || true
 
     deluser "${USER}"   &> /dev/null || true
     delgroup "${GROUP}" &> /dev/null || true
