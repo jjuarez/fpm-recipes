@@ -6,6 +6,7 @@ case "$1" in
   configure)
     user="azkaban"
     group="azkaban"
+    serverdir="/opt/azkaban-solo"
     datadir="/srv/data/azkaban-solo"
     logdir="/var/log/azkaban-solo"
 
@@ -14,12 +15,14 @@ case "$1" in
     fi
 
     if ! id "$user" > /dev/null 2>&1 ; then
-      adduser --system --home "$datadir" --no-create-home \
+      adduser --system --home "$serverdir" --no-create-home \
         --ingroup "$group" --disabled-password \
-        --shell /bin/false "$user"
+        --shell /bin/bash "$user"
     fi
 
     install -d -o "$user" -g "$group" -m 0755 "$datadir"
     install -d -o "$user" -g "$group" -m 0755 "$logdir"
+
+    chown -R "$user":"$group" /opt/azkaban-solo
     ;;
 esac
