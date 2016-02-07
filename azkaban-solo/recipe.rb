@@ -20,7 +20,6 @@ class AzkabanSolo < FPM::Cookery::Recipe
   post_uninstall 'post-uninstall'
 
   config_files %w{
-    /etc/default/azkaban-solo
     /etc/azkaban-solo/azkaban-users.xml
     /etc/azkaban-solo/log4j.properties
     /etc/azkaban-solo/global.properties
@@ -37,8 +36,6 @@ class AzkabanSolo < FPM::Cookery::Recipe
     opt('azkaban-solo').install Dir['*']
     opt('azkaban-solo/bin').install workdir('scripts/azkaban-solo.sh')
 
-    etc('default').install workdir('config/azkaban-solo.default'), 'azkaban-solo'
-    etc('init.d').install workdir('scripts/azkaban-solo.init'), 'azkaban-solo'
     etc('security/limits.d').install workdir('config/azkaban-solo.limits'), 'azkaban-solo.conf'
     etc('logrotate.d').install workdir('config/azkaban-solo.logrotate'), 'azkaban-solo.conf'
     etc('azkaban-solo').install workdir('config/log4j.properties')
