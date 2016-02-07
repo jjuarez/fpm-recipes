@@ -2,27 +2,30 @@
 
 set -e
 
-case "$1" in
+USER="azkaban"
+GROUP="azkaban"
+PERMISSIONS="0755"
+SERVER_DIR="/opt/azkaban-solo"
+DATA_DIR="/srv/data/azkaban-solo"
+LOG_DIR="/var/log/azkaban-solo"
+
+
+case "${1}" in
   configure)
-    user="azkaban"
-    group="azkaban"
-    serverdir="/opt/azkaban-solo"
-    datadir="/srv/data/azkaban-solo"
-    logdir="/var/log/azkaban-solo"
-
-    if ! getent group "$group" > /dev/null 2>&1 ; then
-      addgroup --system "$group" --quiet
+    if ! getent group "${GROUP}" &> /dev/null ; then
+      addgroup --system "${GROUP}" --quiet
     fi
 
-    if ! id "$user" > /dev/null 2>&1 ; then
-      adduser --system --home "$serverdir" --no-create-home \
-        --ingroup "$group" --disabled-password \
-        --shell /bin/bash "$user"
+    if ! id "${USER}" &> /dev/null ; then
+      adduser --system --home "${SERVER_DIR}" --no-create-home \
+        --ingroup "${GROUP}" --disabled-password \
+        --shell /bin/bash "${USER}"
     fi
 
-    install -d -o "$user" -g "$group" -m 0755 "$datadir"
-    install -d -o "$user" -g "$group" -m 0755 "$logdir"
+    install -d -o "${USER}" -g "${GROUP}" -m "${PERMISSIONS}" "${DATA_DIR}"
+    install -d -o "${USER}" -g "${GROUP}" -m "${PERMISSIONS}" "${LOG_DIR}"
 
-    chown -R "$user":"$group" /opt/azkaban-solo
+    chown -R "${USER}":"${GROUP}" "${SERVER_DIR}"
     ;;
 esac
+

@@ -2,16 +2,26 @@
 
 set -e
 
+USER="azkaban"
+GROUP="azkaban"
+SERVER_DIR="/opt/azkaban-solo"
+CONFIG_DIR="/etc/azkaban-solo"
+DATA_DIR="/srv/data/azkaban-solo"
+LOG_DIR="/var/log/azkaban-solo"
+
+
 case "$1" in
   remove)
-    # Nothing to do here
+    # Nothing to do here
     ;;
 
   purge)
-    rm -rf /srv/data/azkaban-solo /var/log/azkaban-solo
+    rm -rf "${LOG_DIR}"    &> /dev/null || true
+    rm -rf "${CONFIG_DIR}" &> /dev/null || true
+    rm -rf "${DATA_DIR}"   &> /dev/null || true
 
-    deluser  azkaban || true
-    delgroup azkaban || true
+    deluser "${USER}"   &> /dev/null || true
+    delgroup "${GROUP}" &> /dev/null || true
     ;;
 
   upgrade|failed-upgrade|abort-install|abort-upgrade|disappear)
@@ -21,6 +31,6 @@ case "$1" in
   *)
     echo "$0 called with unknown argument \`$1'" >&2
     exit 1
-   ;;
+    ;;
 esac
 
