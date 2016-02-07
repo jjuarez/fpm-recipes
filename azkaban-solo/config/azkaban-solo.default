@@ -1,5 +1,0 @@
-AZKABAN_USER=azkaban
-AZKABAN_GROUP=azkaban
-AZKABAN_HOME=/opt/azkaban-solo
-AZKABAN_EXECUTOR_PORT=12321
-AZKABAN_TMP=/tmp/azkaban-tmp
