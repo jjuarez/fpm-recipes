@@ -4,5 +4,7 @@ tmp-*/
 .buildpath
 .project
 .vagrant*
+.rbenv-gemset
+.ruby-version
 /.bundle/
 /.vendor/bundle/
