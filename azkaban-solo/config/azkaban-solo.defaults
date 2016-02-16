@@ -1,7 +1,8 @@
 AZKABAN_USER="azkaban"
 AZKABAN_GROUP="azkaban"
 AZKABAN_HOME="/opt/azkaban-solo"
-AZKABAN_OPTS=""
+AZKABAN_CONF="/etc/azkaban-solo"
+AZKABAN_OPTS="-server -Xms512M -Xmx2G -XX:+UseConcMarkSweepGC -Djava.awt.headless=true -Djava.net.preferIPv4Stack=true -Dcom.sun.management.jmxremote -Dcom.sun.management.jmxremote.ssl=false -Dcom.sun.management.jmxremote.authenticate=false -Dlog4j.configuration=file:/etc/azkaban-solo/log4j.properties -Djava.io.tmpdir=${AZKABAN_TMP} -Dexecutorport=${AZKABAN_EXECUTOR_PORT} -Dserverpath=${AZKABAN_HOME}"
 AZKABAN_TMP="/tmp"
 AZKABAN_EXECUTOR_PORT=12321
 
