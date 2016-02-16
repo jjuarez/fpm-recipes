@@ -22,7 +22,7 @@ class AzkabanSolo < FPM::Cookery::Recipe
   config_files %w{
     /etc/security/limits.d/azkaban-solo.conf
     /etc/logrotate.d/azkaban-solo.conf
-    /etc/defaults/azkaban-solo
+    /etc/default/azkaban-solo
     /etc/azkaban-solo/azkaban-users.xml
     /etc/azkaban-solo/log4j.properties
     /etc/azkaban-solo/global.properties
@@ -34,18 +34,16 @@ class AzkabanSolo < FPM::Cookery::Recipe
     # nothing to do here...
   end
 
-
   def install
 
-    opt('azkaban-solo').install Dir['*']
-    opt('azkaban-solo/bin').install workdir('scripts/azkaban-solo.sh')
+    opt('azkaban-solo').install      Dir['*']
 
     etc('security/limits.d').install workdir('config/azkaban-solo.limits'), 'azkaban-solo.conf'
-    etc('logrotate.d').install workdir('config/azkaban-solo.logrotate'), 'azkaban-solo.conf'
-    etc('defaults').install workdir('config/azkaban-solo.defaults'), 'azkaban-solo'
-    etc('init.d').install workdir('scripts/azkaban-solo.init'), 'azkaban-solo'
-    etc('azkaban-solo').install workdir('config/log4j.properties')
-    etc('azkaban-solo').install Dir['conf/*']
+    etc('logrotate.d').install       workdir('config/azkaban-solo.logrotate'), 'azkaban-solo.conf'
+    etc('default').install           workdir('config/azkaban-solo.default'), 'azkaban-solo'
+    etc('init.d').install            workdir('scripts/azkaban-solo.init'), 'azkaban-solo'
+    etc('azkaban-solo').install      workdir('config/log4j.properties')
+    etc('azkaban-solo').install      Dir['conf/*'] # The .tar.gz basic configuration
   end
 end
 
