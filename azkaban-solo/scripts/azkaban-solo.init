@@ -20,9 +20,10 @@ service=azkaban-solo
 AZKABAN_USER="azkaban"
 AZKABAN_GROUP="azkaban"
 AZKABAN_HOME="/opt/azkaban-solo"
-AZKABAN_OPTS="-server -Xms512M -Xmx2G -XX:+UseConcMarkSweepGC -Djava.awt.headless=true -Djava.net.preferIPv4Stack=true -Dcom.sun.management.jmxremote -Dcom.sun.management.jmxremote.ssl=false -Dcom.sun.management.jmxremote.authenticate=false -D__AZKABAN_SOLO__ -Dlog4j.configuration=file:/etc/azkaban-solo/log4j.properties -Djava.io.tmpdir=${AZKABAN_TMP} -Dexecutorport=${AZKABAN_EXECUTOR_PORT} -Dserverpath=${AZKABAN_HOME}"
+AZAKBAN_CONF="${AZKABAN_HOME}/conf"
 AZKABAN_TMP="/tmp"
 AZKABAN_EXECUTOR_PORT=12321
+AZKABAN_OPTS=""
 
 
 ##
@@ -39,18 +40,6 @@ LOG_DIR="/var/log/${service}"
 [ -r /etc/default/${service} ] && . /etc/default/${service}
 
 
-##
-# set or override platform specific functions
-start_daemon( ) {
-  local user=${1}
-  local pidfile=${2}
-  local executable=${3}
-  local options=${4}
- 
-  start-stop-daemon --start --chuid ${user} --pidfile ${pidfile} --exec ${executable} -- ${options}
-}
-
-
 echo_ok( ) {
 
   log_end_msg 0
@@ -64,7 +53,7 @@ echo_fail( ) {
 
 
 lockfile=${LOCKFILE:-/var/lock/${service}}
-executable="${JAVA_HOME}/jre/bin/java"
+pattern="__AZKABAN_SOLO__"
 pidfile=${PID_DIR}/${service}.pid
 logfile=${LOG_DIR}/${service}_service.log
 
@@ -87,14 +76,10 @@ ensure_dir( ) {
 # Start the service
 _do_start( ) {
   local classpath=""
-  local options=""
-
 
   log_daemon_msg "Starting ${service}"
 
-  [ -n "${JAVA_HOME}"              ] || exit 5
   [ -x "${JAVA_HOME}/jre/bin/java" ] || exit 5
-  [ -x "${executable}"             ] || exit 5
 
   _do_status &> /dev/null
 
@@ -112,15 +97,15 @@ _do_start( ) {
   # Do some dirty stuffs for the JVM
   for file in ${AZKABAN_HOME}/lib/*.jar; do
     classpath=${classpath}:${file}
-  done
+  done 2>/dev/null
 
   for file in ${AZKABAN_HOME}/extlib/*.jar; do
     classpath=${classpath}:${file}
-  done
+  done 2>/dev/null
 
   for file in ${AZKABAN_HOME}/plugins/*.jar; do
     classpath=${classpath}:${file}
-  done
+  done 2>/dev/null
 
   if [ -n "${HADOOP_HOME}" ]; then
 
@@ -133,15 +118,16 @@ _do_start( ) {
     classpath=${classpath}:${HIVE_HOME}/conf:${HIVE_HOME}/lib/*
   fi
 
-  options="${AZKABAN_OPTS} -D__AZKABAN_SOLO__ -Dlog4j.configuration=file:/etc/azkaban-solo/log4j.properties -Djava.io.tmpdir=${AZKABAN_TMP} -Dexecutorport=${AZKABAN_EXECUTOR_PORT} -Dserverpath=${AZKABAN_HOME}"
-
-  start-stop-daemon --start --chuid ${AZKABAN_USER} --pidfile ${pidfile} --exec ${executable} ${options} -classpath ${classpath} azkaban.webapp.AzkabanSingleServer -conf "${AZKABAN_HOME}/conf"
+  su - ${AZKABAN_USER} -c "${JAVA_HOME}/jre/bin/java -D${pattern} ${AZKABAN_OPTS} -classpath ${classpath} azkaban.webapp.AzkabanSingleServer -conf ${AZKABAN_CONF} &>/dev/null &"
 
   retval=${?}
   sleep 1
 
+  pid=$(ps -e -o pid,command | grep -v grep | grep ${pattern} | cut -f1 -d" ")
+  echo "${pid}" > ${pidfile}
+
   # make sure it's still running. some errors occur only after startup
-  status &> /dev/null
+  _do_status &> /dev/null
   if [ $? -ne 0 ]; then
 
     echo_fail
@@ -181,7 +167,7 @@ _do_stop( ) {
     sleep 1
     return $retval
   else
-    pid=$(pgrep -P1 -fl ${executable} | grep -v grep | grep -v bash | cut -f1 -d" ")
+    pid=$(ps -e -o pid,command | grep -v grep | grep "${pattern}" | awk '{ print $1 }')
 
     if [ -n "${pid}" ]; then
 
@@ -216,7 +202,7 @@ _do_status( ) {
   local pid=""
 
   # 1.- try "ps"
-  pid=$(pgrep -P1 -fl ${executable} | grep -v grep | grep -v bash | cut -f1 -d" ")
+  pid=$(ps -e -o pid,command | grep -v grep | grep "${pattern}" |  awk '{ print $1 }')
 
   if [ -n "${pid}" ]; then
 
