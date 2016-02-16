@@ -6,8 +6,7 @@
 declare readonly DEFAULT_AZKABAN_USER="azkaban"
 declare readonly DEFAULT_AZKABAN_GROUP="azkaban"
 declare readonly DEFAULT_AZKABAN_HOME="/opt/azkaban-solo"
-declare readonly DEFAULT_AZKABAN_CONF="/etc/azkaban-solo"
-declare readonly DEFAULT_AZKABAN_OPTS="-Xmx3G"
+declare readonly DEFAULT_AZKABAN_OPTS="-server -Xms512M -Xmx1G"
 declare readonly DEFAULT_AZKABAN_TMP="/tmp"
 declare readonly DEFAULT_AZKABAN_EXECUTOR_PORT="12321"
 
@@ -17,7 +16,6 @@ declare readonly DEFAULT_AZKABAN_EXECUTOR_PORT="12321"
 AZKABAN_USER=${AZKABAN_USER:-${DEFAULT_AZKABAN_USER}}
 AZKABAN_GROUP=${AZKABAN_GROUP:-${DEFAULT_AZKABAN_GROUP}}
 AZKABAN_HOME=${AZKABAN_HOME:-${DEFAULT_AZKABAN_HOME}}
-AZKABAN_CONF=${AZKABAN_CONF:-${DEFAULT_AZKABAN_CONF}}
 AZKABAN_OPTS=${AZKABAN_OPTS:-${DEFAULT_AZKABAN_OPTS}}
 AZKABAN_TMP=${AZKABAN_TMP:-${DEFAULT_AZKABAN_TMP}}
 AZKABAN_EXECUTOR_PORT=${AZKABAN_EXECUTOR_PORT:-${DEFAULT_AZKABAN_EXECUTOR_PORT}}
@@ -94,9 +92,9 @@ _do_start_server( ) {
     CLASSPATH=${CLASSPATH}:${HIVE_HOME}/conf:${HIVE_HOME}/lib/*
   }
 
-  AZKABAN_OPTS="${AZKABAN_OPTS} -D__AZKABAN_SOLO__ -Dlog4j.configuration=file:/etc/azkaban-solo/log4j.properties -server -Dcom.sun.management.jmxremote -Djava.io.tmpdir=${AZKABAN_TMP} -Dexecutorport=${AZKABAN_EXECUTOR_PORT} -Dserverpath=${AZKABAN_HOME}"
+  AZKABAN_OPTS="${AZKABAN_OPTS} -D__AZKABAN_SOLO__ -Dlog4j.configuration=file:/etc/azkaban-solo/log4j.properties -Dcom.sun.management.jmxremote -Djava.io.tmpdir=${AZKABAN_TMP} -Dexecutorport=${AZKABAN_EXECUTOR_PORT} -Dserverpath=${AZKABAN_HOME}"
 
-  ${JAVA_HOME}/bin/java ${AZKABAN_OPTS} -classpath ${CLASSPATH} azkaban.webapp.AzkabanSingleServer -conf ${AZKABAN_CONF}
+  ${JAVA_HOME}/bin/java ${AZKABAN_OPTS} -classpath ${CLASSPATH} azkaban.webapp.AzkabanSingleServer -conf ${AZKABAN_HOME}/conf &
 }
 
 
