@@ -6,7 +6,7 @@ class AzkabanSolo < FPM::Cookery::Recipe
 
   name     'azkaban-solo'
   version  '2.5.0'
-  revision 0
+  revision 'tuenti0'
   license  'Apache License, Version 2.0'
   homepage 'http://azkaban.github.io/'
   source   "https://s3.amazonaws.com/azkaban2/azkaban2/#{version}/azkaban-solo-server-#{version}.tar.gz"
@@ -20,6 +20,9 @@ class AzkabanSolo < FPM::Cookery::Recipe
   post_uninstall 'post-uninstall'
 
   config_files %w{
+    /etc/security/limits.d/azkaban-solo.limits
+    /etc/logrotate.d/azkaban-solo.conf
+    /etc/defaults/azkaban-solo
     /etc/azkaban-solo/azkaban-users.xml
     /etc/azkaban-solo/log4j.properties
     /etc/azkaban-solo/global.properties
@@ -28,6 +31,7 @@ class AzkabanSolo < FPM::Cookery::Recipe
   }
 
   def build
+    # nothing to do here...
   end
 
 
@@ -38,6 +42,8 @@ class AzkabanSolo < FPM::Cookery::Recipe
 
     etc('security/limits.d').install workdir('config/azkaban-solo.limits'), 'azkaban-solo.conf'
     etc('logrotate.d').install workdir('config/azkaban-solo.logrotate'), 'azkaban-solo.conf'
+    etc('defaults').install workdir('config/azkaban-solo.defauls'), 'azkaban-solo'
+    etc('init.d').install workdir('scripts/azkaban-solo.init'), 'azkaban-solo'
     etc('azkaban-solo').install workdir('config/log4j.properties')
     etc('azkaban-solo').install Dir['conf/*']
   end
