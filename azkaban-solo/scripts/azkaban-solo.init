@@ -118,7 +118,7 @@ _do_start( ) {
     classpath=${classpath}:${HIVE_HOME}/conf:${HIVE_HOME}/lib/*
   fi
 
-  su - ${AZKABAN_USER} -c "${JAVA_HOME}/jre/bin/java -D${pattern} ${AZKABAN_OPTS} -classpath ${classpath} azkaban.webapp.AzkabanSingleServer -conf ${AZKABAN_CONF} &>/dev/null &"
+  su - ${AZKABAN_USER} -c "${JAVA_HOME}/jre/bin/java -D${pattern} ${AZKABAN_OPTS} -classpath ${classpath} azkaban.webapp.AzkabanSingleServer -conf ${AZKABAN_CONF} 2>/dev/null &"
 
   retval=${?}
   sleep 1
