@@ -8,6 +8,7 @@ SERVER_DIR="/opt/azkaban-solo"
 CONFIG_DIR="/etc/azkaban-solo"
 DATA_DIR="/srv/data/azkaban-solo"
 LOG_DIR="/var/log/azkaban-solo"
+RUN_DIR="/var/run/azkaban-solo"
 
 
 case "$1" in
@@ -20,8 +21,9 @@ case "$1" in
     rm -rf "${CONFIG_DIR}" &> /dev/null || true
     rm -rf "${DATA_DIR}"   &> /dev/null || true
     rm -rf "${SERVER_DIR}" &> /dev/null || true
+    rm -fr "${RUN_DIR}"    &> /dev/null || true
 
-    deluser "${USER}"   &> /dev/null || true
+    deluser  "${USER}"  &> /dev/null || true
     delgroup "${GROUP}" &> /dev/null || true
     ;;
 
