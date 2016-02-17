@@ -16,7 +16,7 @@ service=azkaban-solo
 
 
 ##
-# Setting defaults
+# Setting default configuration
 AZKABAN_USER="azkaban"
 AZKABAN_GROUP="azkaban"
 AZKABAN_HOME="/opt/azkaban-solo"
@@ -27,8 +27,12 @@ AZKABAN_OPTS=""
 
 
 ##
-# Service settings
+# Locals ervice settings
 SERVICE_MAX_WAIT=10
+DEFAULT_PERMISSIONS=0755
+JAVA=""
+AZKABAN_CLASSPATH=""
+START_TIMEOUT=5
 PID_DIR="/var/run/${service}"
 LOG_DIR="/var/log/${service}"
 
@@ -40,28 +44,18 @@ LOG_DIR="/var/log/${service}"
 [ -r /etc/default/${service} ] && . /etc/default/${service}
 
 
-echo_ok( ) {
-
-  log_end_msg 0
-}
-
-
-echo_fail( ) {
-
-  log_end_msg 1
-}
-
-
-lockfile=${LOCKFILE:-/var/lock/${service}}
 pattern="__AZKABAN_SOLO__"
-pidfile=${PID_DIR}/${service}.pid
-logfile=${LOG_DIR}/${service}_service.log
+lock_file=${LOCKFILE:-/var/lock/${service}}
+pid_file=${PID_DIR}/${service}.pid
+log_file=${LOG_DIR}/${service}_service.log
 
 
-ensure_dir( ) {
+##
+# Ensure the existence, permisions and owner of a directory
+_ensure_directory( ) {
   local directory="${1}"
   local user=${2:-${AZKABAN_USER}}
-  local permissions=${3:-0755}
+  local permissions=${3:-${DEFAULT_PERMISSIONS}}
 
   if [ ! -d "${directory}" ]; then
 
@@ -73,70 +67,117 @@ ensure_dir( ) {
 
 
 ##
-# Start the service
-_do_start( ) {
-  local classpath=""
+# Show a basic help screen
+_show_help( ) {
+  local error_code=${1:-0}
 
-  log_daemon_msg "Starting ${service}"
+  echo "${0} {start|stop|status|restart}"
+  exit ${error_code}
+}
 
-  [ -x "${JAVA_HOME}/jre/bin/java" ] || exit 5
 
-  _do_status &> /dev/null
+##
+# Do all these dirty things that JVM needs
+_load_classpath( ) {
 
-  if [ ${?} -eq 0 ]; then
+  AZKABAN_CLASSPATH=""
 
-    log_action_msg "${service} is already running."
-    echo_ok
-    exit 0
-  fi
-
-  ensure_dir ${PID_DIR} ${AZKABAN_USER}
-  ensure_dir ${LOG_DIR} ${AZKABAN_USER}
-
-  ##
-  # Do some dirty stuffs for the JVM
-  for file in ${AZKABAN_HOME}/lib/*.jar; do
-    classpath=${classpath}:${file}
+  for f in ${AZKABAN_HOME}/lib/*.jar; do
+    AZKABAN_CLASSPATH=${AZKABAN_CLASSPATH}:${f}
   done 2>/dev/null
 
-  for file in ${AZKABAN_HOME}/extlib/*.jar; do
-    classpath=${classpath}:${file}
+  for f in ${AZKABAN_HOME}/extlib/*.jar; do
+    AZKABAN_CLASSPATH=${AZKABAN_CLASSPATH}:${f}
   done 2>/dev/null
 
-  for file in ${AZKABAN_HOME}/plugins/*.jar; do
-    classpath=${classpath}:${file}
+  for f in ${AZKABAN_HOME}/plugins/*.jar; do
+    AZKABAN_CLASSPATH=${AZKABAN_CLASSPATH}:${f}
   done 2>/dev/null
 
   if [ -n "${HADOOP_HOME}" ]; then
 
-    classpath=${classpath}:${HADOOP_HOME}/conf:${HADOOP_HOME}/lib/*
+    AZKABAN_CLASSPATH=${AZKABAN_CLASSPATH}:${HADOOP_HOME}/conf:${HADOOP_HOME}/lib/*
     options="${options} -Djava.library.path=${HADOOP_HOME}/lib/native/Linux-amd64-64"
   fi
 
   if [ -n "${HIVE_HOME}" ]; then
 
-    classpath=${classpath}:${HIVE_HOME}/conf:${HIVE_HOME}/lib/*
+    AZKABAN_CLASSPATH=${AZKABAN_CLASSPATH}:${HIVE_HOME}/conf:${HIVE_HOME}/lib/*
+  fi
+}
+
+
+##
+# Determines where is the java command
+_get_java( ) {
+  
+  if [ -z "${JAVA_HOME}" ]; then
+
+    log_action_msg "JAVA_HOME environment variable not defined"
+    log_end_msg 5
   fi
 
-  su - ${AZKABAN_USER} -c "${JAVA_HOME}/jre/bin/java -D${pattern} ${AZKABAN_OPTS} -classpath ${classpath} azkaban.webapp.AzkabanSingleServer -conf ${AZKABAN_CONF} &>/dev/null &"
+  if [ -x "${JAVA_HOME}/jre/bin/java" ]; then
 
-  retval=${?}
-  sleep 1
+    JAVA="${JAVA_HOME}/jre/bin/java"
+  else
+  if [ -x "${JAVA_HOME}/bin/java" ]; then
 
-  pid=$(ps -e -o pid,command | grep -v grep | grep ${pattern} | cut -f1 -d" ")
-  echo "${pid}" > ${pidfile}
+    JAVA="${JAVA_HOME}/bin/java"
+  else
 
-  # make sure it's still running. some errors occur only after startup
-  _do_status &> /dev/null
-  if [ $? -ne 0 ]; then
-
-    echo_fail
-    exit 1
+    log_action_msg "Java has not been located at the system"
+    log_end_msg 5
   fi
+  fi
+}
 
-  [ ${retval} -eq 0 ] && touch ${lockfile}
 
-  echo_ok
+##
+# Start the service
+do_start( ) {
+  local retval=0
+
+  log_daemon_msg "Starting ${service}"
+  do_status &> /dev/null
+
+  if [ ${?} -eq 0 ]; then
+
+    log_action_msg " is already running"
+    log_end_msg 0
+
+    retval=0
+  else
+
+    _get_java
+    _ensure_directory ${PID_DIR} ${AZKABAN_USER}
+    _ensure_directory ${LOG_DIR} ${AZKABAN_USER}
+
+    # Load the classpath JVM
+    _load_classpath
+
+    # Launch the JVM
+    su - ${AZKABAN_USER} -c "${JAVA} -D${pattern} ${AZKABAN_OPTS} -classpath ${AZKABAN_CLASSPATH} azkaban.webapp.AzkabanSingleServer -conf ${AZKABAN_CONF} &"
+
+    retval=${?}
+    sleep ${START_TIMEOUT}
+
+    pid=$(ps -e -o pid,command | grep -v grep | grep "${pattern}" | awk '{ print $1 }')
+    echo "${pid}" > ${pid_file}
+
+    do_status &> /dev/null
+
+    if [ ${?} -ne 0 ]; then
+
+      log_end_msg 1
+
+      retval=1
+    else
+      [ ${retval} -eq 0 ] && touch ${lock_file}
+
+      log_end_msg 0
+    fi
+  fi
 
   return ${retval}
 }
@@ -144,28 +185,28 @@ _do_start( ) {
 
 ##
 # Stops the service
-_do_stop( ) {
+do_stop( ) {
    
   log_daemon_msg "Stopping ${service}"
 
-  if [ -f ${pidfile} ]; then
+  if [ -f ${pid_file} ]; then
 
-    killproc -p ${pidfile} ${service}
+    killproc -p ${pid_file} ${service}
     retval=${?}
 
     if [ ${retval} -eq 0 ]; then
 
-      rm -f ${pidfile}
-      rm -f ${lockfile}
+      rm -f ${pid_file}
+      rm -f ${lock_file}
 
-      echo_ok
+      log_end_msg 0
     else
 
-      echo_fail
+      log_end_msg 1
     fi
 
     sleep 1
-    return $retval
+    return ${retval}
   else
     pid=$(ps -e -o pid,command | grep -v grep | grep "${pattern}" | awk '{ print $1 }')
 
@@ -176,20 +217,20 @@ _do_stop( ) {
 
       if [ ${retval} -eq 0 ]; then
 
-        rm -f ${pidfile}
-        rm -f ${lockfile}
+        rm -f ${pid_file}
+        rm -f ${lock_file}
 
-        echo_ok
+        log_end_msg 0
       else
 
-        echo_fail
+       log_end_msg 1
       fi
 
       sleep 1
       return ${retval}
     else
 
-      echo_fail
+      log_end_msg 1
     fi
   fi
 }
@@ -197,23 +238,21 @@ _do_stop( ) {
 
 ##
 # Get the status of the service
-_do_status( ) {
+do_status( ) {
 
   local pid=""
 
-  # 1.- try "ps"
   pid=$(ps -e -o pid,command | grep -v grep | grep "${pattern}" |  awk '{ print $1 }')
 
   if [ -n "${pid}" ]; then
 
-    log_action_msg "$service (pid $pid) is running"
+    log_action_msg "$service (pid ${pid}) is running"
     return 0
   fi
 
-  # 2.- try "/var/run/*.pid" files
-  if [ -f "${pidfile}" ]; then
+  if [ -f "${pid_file}" ]; then
 
-    read pid < "${pidfile}"
+    read pid < "${pid_file}"
     if [ -n "${pid}" ]; then
 
       log_action_msg "${service} dead but pid file exists"
@@ -222,7 +261,7 @@ _do_status( ) {
   fi
 
   # See if lock file exist
-  if [ -f "${lockfile}" ]; then
+  if [ -f "${lock_file}" ]; then
 
     log_action_msg "${service} dead but subsys locked"
     return 2
@@ -235,16 +274,16 @@ _do_status( ) {
 
 ##
 # Stops the service
-_do_restart( ) {
+do_restart( ) {
   local count=0
   local success=0
 
-  _do_stop
+  do_stop
 
   while [ ${count} -lt ${SERVICE_MAX_WAIT} ]; do
 
     count=$((count + 1))
-    _do_status &> /dev/null
+    do_status &> /dev/null
 
     if [ ${?} -eq 0 ]; then
       # still running
@@ -257,7 +296,7 @@ _do_restart( ) {
 
   if [ ${success} = 1 ]; then
 
-    _do_start
+    do_start
   else
 
     log_failure_msg "Timed out waiting for ${service} to stop"
@@ -266,19 +305,19 @@ _do_restart( ) {
 }
 
 
+
 ##
 # ::main::
 case "${1}" in
-  start|stop|status|restart)
-    _do_${1}
+  start|stop|status|restart) 
+    do_${1}
     ;;
 
   *)
-    echo "Usage: ${0} {start|stop|status|restart}"
-    exit 2
+    show_help 2
     ;;
 esac
 
 
-exit $?
+exit ${?}
 
