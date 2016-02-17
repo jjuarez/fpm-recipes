@@ -14,7 +14,7 @@ class AzkabanSolo < FPM::Cookery::Recipe
   arch     'all'
   section  'databases'
 
-  depends 'default-jre-headless'
+# depends 'default-jre-headless'
 
   post_install   'post-install'
   post_uninstall 'post-uninstall'
