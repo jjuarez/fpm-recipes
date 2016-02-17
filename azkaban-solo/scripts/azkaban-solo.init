@@ -314,7 +314,7 @@ case "${1}" in
     ;;
 
   *)
-    show_help 2
+    _show_help 2
     ;;
 esac
 
