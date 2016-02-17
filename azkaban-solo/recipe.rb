@@ -2,11 +2,11 @@
 # Azkaban Solo server from LinkedIn Corp.
 class AzkabanSolo < FPM::Cookery::Recipe
 
-  description 'The most simple form of Azkaban server'
+  description 'Azkaban solo server with LDAP support'
 
   name     'azkaban-solo'
   version  '2.5.0'
-  revision 'tuenti0'
+  revision 'tuenti1'
   license  'Apache License, Version 2.0'
   homepage 'http://azkaban.github.io/'
   source   "https://s3.amazonaws.com/azkaban2/azkaban2/#{version}/azkaban-solo-server-#{version}.tar.gz"
@@ -36,14 +36,21 @@ class AzkabanSolo < FPM::Cookery::Recipe
 
   def install
 
-    opt('azkaban-solo').install      Dir['*']
+    # Files from the original .tar.gz
+    opt('azkaban-solo').install Dir['*']
 
+    # Additional plugins
+    opt('azkaban-solo/plugins').install workdir('plugins/azkaban-ldap-usermanager-1.0.3.jar'), 'azkaban-ldap-usermanager-1.0.3.jar'
+
+    # System configuration
     etc('security/limits.d').install workdir('config/azkaban-solo.limits'), 'azkaban-solo.conf'
     etc('logrotate.d').install       workdir('config/azkaban-solo.logrotate'), 'azkaban-solo.conf'
     etc('default').install           workdir('config/azkaban-solo.default'), 'azkaban-solo'
     etc('init.d').install            workdir('scripts/azkaban-solo.init'), 'azkaban-solo'
     etc('azkaban-solo').install      workdir('config/log4j.properties')
-    etc('azkaban-solo').install      Dir['conf/*'] # The .tar.gz basic configuration
+
+    # Service basic configuration
+    etc('azkaban-solo').install Dir['conf/*'] # The .tar.gz basic configuration
   end
 end
 
